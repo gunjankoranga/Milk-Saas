@@ -2,7 +2,14 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 from django.core.validators import RegexValidator
 
+class ActiveManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
 class CustomUserManager(BaseUserManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
     def create_user(self, username, phone_number, password=None, **extra_fields):
         if not username and not phone_number:
             raise ValueError('Either username or phone number must be set')
@@ -33,10 +40,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
-    objects = CustomUserManager()
+    # Managers
+    objects = CustomUserManager()  # Returns only active users
+    all_objects = models.Manager()  # Can return all users including inactive
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['phone_number']
+
+    def soft_delete(self):
+        self.is_active = False
+        self.save()
 
     class Meta:
         indexes = [

@@ -9,6 +9,7 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from django.core.cache import cache
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.core.exceptions import ValidationError
+from rest_framework.permissions import AllowAny
 import logging
 
 logger = logging.getLogger('user')
@@ -18,6 +19,7 @@ class CustomAnonRateThrottle(AnonRateThrottle):
     rate = '20/minute'
 
 class UserRegistrationView(APIView):
+    permission_classes = [AllowAny]
     throttle_classes = [CustomAnonRateThrottle]
 
     def post(self, request):
@@ -32,7 +34,7 @@ class UserRegistrationView(APIView):
                     'message': 'Registration successful'
                 }
                 
-                return Response(response_data, status=status.HTTP_201_CREATED)
+                return Response(response_data, status=status.HTTP_200_OK)
             
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
@@ -47,7 +49,8 @@ class UserRegistrationView(APIView):
             )
 
 class UserLoginView(APIView):
-    throttle_classes = [CustomAnonRateThrottle] 
+    permission_classes = [AllowAny]
+    throttle_classes = [CustomAnonRateThrottle]
 
     def post(self, request):
         try:
@@ -90,8 +93,13 @@ class UserLoginView(APIView):
                     token = RefreshToken.for_user(user)
                     return Response({
                         'token': str(token.access_token),
-                        'message': 'Login successful'
-                    })
+                        'message': 'Login successful',
+                        'user': {
+                            'username': user.username,
+                            'phone_number': user.phone_number,
+                            'email': user.email
+                        }
+                    }, status=status.HTTP_200_OK)
                 
                 # Increment failed attempts
                 cache.set(cache_key, failed_attempts + 1, timeout=300)  # 5 minutes timeout

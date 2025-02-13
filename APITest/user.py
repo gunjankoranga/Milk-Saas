@@ -1,11 +1,10 @@
 import requests
 
 # API endpoints
-BASE_URL = 'http://127.0.0.1:8000//api'
+BASE_URL = 'http://127.0.0.1:8000/api'
 REGISTER_URL = f'{BASE_URL}/register/'
 LOGIN_URL = f'{BASE_URL}/login/'
 
-# Registration
 def register_user():
     data = {
         "username": "testuser",
@@ -17,7 +16,6 @@ def register_user():
     print("Registration Response:", response.json())
     return response.json()
 
-# Login
 def login_user(login_field, password):
     data = {
         "login_field": login_field,  # Can be username or phone number
@@ -25,15 +23,19 @@ def login_user(login_field, password):
     }
     response = requests.post(LOGIN_URL, json=data)
     print("Login Response:", response.json())
-    return response.json()
+    return response.json().get('token')
 
-# Example usage
-if __name__ == "__main__":
+def test_auth_flow():
     # Register new user
     register_response = register_user()
     
     # Login with username
-    login_response = login_user("testuser", "Password123")
-    
+    token = login_user("testuser", "Password123")
+
     # Login with phone number
-    login_response = login_user("+919876543210", "Password123")
+    token = login_user("+919876543210", "Password123")
+    
+    return token
+
+if __name__ == "__main__":
+    test_auth_flow()
